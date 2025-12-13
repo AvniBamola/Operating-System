@@ -3,6 +3,7 @@
 typedef struct{
     int arrival;
     int burst;
+    int remaining;
     int idx;
     int completed;
 }Process;
@@ -19,6 +20,7 @@ int main()
         p[i].idx=i;
         p[i].completed=0;
         scanf("%d",&p[i].burst);
+        p[i].remaining=p[i].burst;
     }
     for(i=0;i<n;i++)
     {
@@ -27,22 +29,22 @@ int main()
 
     int completed_count=0;
     double total_wait=0,total_tat=0;
-    int gantt[100],g=0;
+    int gantt[500],g=0;
     int current_time=0,wait=0,start=0,complete=0,tat=0;
 
     //Main Loop
     while(completed_count<n)
     {
         int min_index=-1;
-        int min_burst=1e9;
+        int min_remaining_burst=1e9;
         //Find the process with smallest burst time among the arrives ones
         for(i=0;i<n;i++)
         {
             if(p[i].completed==0 && p[i].arrival<=current_time)
             {
-                if(p[i].burst<min_burst)
+                if(p[i].remaining<min_remaining_burst)
                 {
-                    min_burst=p[i].burst;
+                    min_remaining_burst=p[i].remaining;
                     min_index=i;
                 }
             }
@@ -53,19 +55,24 @@ int main()
             current_time++;
             continue;
         }
+        // Run process for 1 unit (Preemptive Part)
+        p[min_index].remaining--;
+        gantt[g++]=min_index;    // store execution order
+        current_time++;
+
+        // if completed now
         //run the selected process
-        start=current_time;
-        wait=start-p[min_index].arrival;
-        complete=start+p[min_index].burst;
+        if(p[min_index].remaining==0)
+        {
+            p[min_index].completed=1;
+            completed_count++;
+        complete=current_time;
         tat=complete-p[min_index].arrival;
+        wait=tat-p[min_index].burst;
         total_wait+=wait;
         total_tat+=tat;
-
-        current_time=complete;
-        p[min_index].completed=1;
-        gantt[g++]=min_index;
-        completed_count++;
     }
+}
     printf("Gantt Chart :");
     for (int i = 0; i < g; i++)
         printf(" P%d", gantt[i]);
